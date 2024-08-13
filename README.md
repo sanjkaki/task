@@ -9,6 +9,10 @@ The repository structure
 │   ├── outputs.tf
 │   └── provider.tf
 └── eksctl
+    ├── canary
+    │   ├── canary.yaml
+    │   ├── ingress-canary.yaml
+    │   └── primary.yaml
     ├── cluster.yaml
     ├── commands.txt
     ├── deployment.yaml
