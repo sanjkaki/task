@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: ng
+  name: ng
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ng
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: ng
+    spec:
+      containers:
+      - image: httpd
+        name: ng
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: ng
+  name: ng
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: ng
+

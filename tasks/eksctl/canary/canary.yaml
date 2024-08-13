@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: ng-canary
+  name: ng-canary
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ng-canary
+  template:
+    metadata:
+      labels:
+        app: ng-canary
+    spec:
+      containers:
+      - image: nginx
+        name: ng-canary
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: ng-canary
+  name: ng-canary
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: ng-canary

@@ -30,7 +30,6 @@ nodeGroups:
         - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
         - arn:aws:iam::aws:policy/AmazonSSMPatchAssociation
         - arn:aws:iam::aws:policy/AmazonEC2FullAccess
-        - arn:aws:iam::aws:policy/AdministratorAccess
 
 cloudWatch:
   clusterLogging:
