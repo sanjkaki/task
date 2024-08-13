@@ -17,6 +17,7 @@ The repository structure
     ├── service.yaml
     └── terraform.tfstate
 ```
+**Terraform Configuration:**
 1. Used terraform to create the AWS VPC.
 main.tf
 ```
@@ -172,6 +173,7 @@ resource "aws_route_table_association" "pvt_association2" {
 }
 ```
 
+**Eksctl Configuration**
 2. The above one creates the networking stack and outputs the subnets and I used the outputs in the below cluster.yaml
 ```
 apiVersion: eksctl.io/v1alpha5
@@ -236,6 +238,7 @@ brew install weaveworks/tap/eksctl
 eksctl create cluster -f cluster.yaml
 ```
 
+ **Kubernetes Configuration:**
 5. Created kubernetes resources as suggested.
 Deployment
 ```
@@ -302,3 +305,18 @@ deployment.apps/nginx   3/3     3            3           118m
 NAME                               DESIRED   CURRENT   READY   AGE
 replicaset.apps/nginx-77d8468669   3         3         3       118m
 ```
+
+**Additionally, I created AWS ALB ingress resources as wel as below**
+- Created OIDC for the cluster `eksctl utils associate-iam-oidc-provider --region=us-east-1 --cluster=dev-cluster --approve`
+- Creaed service account for ingress controller `eksctl create iamserviceaccount --cluster=dev-cluster --namespace=kube-system --name=aws-load-balancer-controller --role-name AmazonEKSLoadBalancerControllerRole --attach-policy-arn=arn:aws:iam::aws:policy/AdministratorAccess --approve`
+- Added helm repo `helm repo add eks https://aws.github.io/eks-charts`
+- Installed using below command
+  ```
+  helm install aws-load-balancer-controller eks/aws-load-balancer-controller \
+  -n kube-system \
+  --set clusterName=dev-cluster \
+  --set serviceAccount.create=false \
+  --set serviceAccount.name=aws-load-balancer-controller 
+  ```
+- Checked the ingress controller deployment using `kubectl get deployment -n kube-system aws-load-balancer-controller`
+- Further, created a NodePort service and created ingress resource.
