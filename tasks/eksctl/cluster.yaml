@@ -1,0 +1,50 @@
+apiVersion: eksctl.io/v1alpha5
+kind: ClusterConfig
+vpc:
+  clusterEndpoints:
+    publicAccess:  true
+    privateAccess: true
+  subnets:
+    private:
+      us-east-1a: { id: subnet-0c10055fc4725045c }
+      us-east-1b: { id: subnet-07f654788821df94f }
+    public:
+      us-east-1a: { id: subnet-06f24b6837d202731 }
+      us-east-1b: { id: subnet-0960cf4d6b3f318f4 }
+
+metadata:
+  name: dev-cluster
+  region: us-east-1
+
+nodeGroups:
+  - name: ng-dev-1
+    instanceType: m5.large
+    desiredCapacity: 2
+    privateNetworking: true
+    iam:
+      attachPolicyARNs:
+        - arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly
+        - arn:aws:iam::aws:policy/AmazonEKSClusterPolicy
+        - arn:aws:iam::aws:policy/AmazonEKSWorkerNodePolicy
+        - arn:aws:iam::aws:policy/AmazonSSMFullAccess
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+        - arn:aws:iam::aws:policy/AmazonSSMPatchAssociation
+        - arn:aws:iam::aws:policy/AmazonEC2FullAccess
+        - arn:aws:iam::aws:policy/AdministratorAccess
+
+cloudWatch:
+  clusterLogging:
+    enableTypes: ["audit", "authenticator", "controllerManager", "api", "scheduler"]
+    logRetentionInDays: 7
+
+addons:
+- name: vpc-cni # no version is specified so it deploys the default version
+  attachPolicyARNs:
+    - arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+- name: coredns
+  version: latest # auto discovers the latest available
+- name: kube-proxy
+  version: latest
+- name: aws-ebs-csi-driver
+  wellKnownPolicies:      # add IAM and service account
+    ebsCSIController: true
