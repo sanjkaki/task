@@ -23,7 +23,8 @@ The repository structure
 ```
 **Terraform Configuration:**
 1. Used terraform to create the AWS VPC.
-main.tf
+
+The `main.tf` file
 ```
 resource "aws_vpc" "test-vpc" {
   cidr_block = var.cidr
@@ -178,6 +179,7 @@ resource "aws_route_table_association" "pvt_association2" {
 ```
 
 **Eksctl Configuration**
+
 2. The above one creates the networking stack and outputs the subnets and I used the outputs in the below cluster.yaml
 ```
 apiVersion: eksctl.io/v1alpha5
@@ -243,8 +245,10 @@ eksctl create cluster -f cluster.yaml
 ```
 
  **Kubernetes Configuration:**
+ 
 5. Created kubernetes resources as suggested.
-Deployment
+
+`Deployment`
 ```
 apiVersion: apps/v1
 kind: Deployment
@@ -269,7 +273,8 @@ spec:
         - containerPort: 80
 ```
 
-Service
+
+`Service`
 ```
 ---
 apiVersion: v1
@@ -289,6 +294,7 @@ spec:
     protocol: TCP
   type: LoadBalancer
 ```
+
 
 5. Output for the command `kubectl get all`
 ```
@@ -311,6 +317,7 @@ replicaset.apps/nginx-77d8468669   3         3         3       118m
 ```
 
 6. **Additionally, I created AWS ALB ingress resources as wel as below**
+
 - Created OIDC for the cluster `eksctl utils associate-iam-oidc-provider --region=us-east-1 --cluster=dev-cluster --approve`
 - Creaed service account for ingress controller `eksctl create iamserviceaccount --cluster=dev-cluster --namespace=kube-system --name=aws-load-balancer-controller --role-name AmazonEKSLoadBalancerControllerRole --attach-policy-arn=arn:aws:iam::aws:policy/AdministratorAccess --approve`
 - Added helm repo `helm repo add eks https://aws.github.io/eks-charts`
