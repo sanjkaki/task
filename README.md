@@ -306,7 +306,7 @@ NAME                               DESIRED   CURRENT   READY   AGE
 replicaset.apps/nginx-77d8468669   3         3         3       118m
 ```
 
-**Additionally, I created AWS ALB ingress resources as wel as below**
+6. **Additionally, I created AWS ALB ingress resources as wel as below**
 - Created OIDC for the cluster `eksctl utils associate-iam-oidc-provider --region=us-east-1 --cluster=dev-cluster --approve`
 - Creaed service account for ingress controller `eksctl create iamserviceaccount --cluster=dev-cluster --namespace=kube-system --name=aws-load-balancer-controller --role-name AmazonEKSLoadBalancerControllerRole --attach-policy-arn=arn:aws:iam::aws:policy/AdministratorAccess --approve`
 - Added helm repo `helm repo add eks https://aws.github.io/eks-charts`
@@ -320,3 +320,135 @@ replicaset.apps/nginx-77d8468669   3         3         3       118m
   ```
 - Checked the ingress controller deployment using `kubectl get deployment -n kube-system aws-load-balancer-controller`
 - Further, created a NodePort service and created ingress resource.
+- Sources :
+    - https://docs.aws.amazon.com/eks/latest/userguide/alb-ingress.html
+    - https://docs.aws.amazon.com/eks/latest/userguide/lbc-helm.html
+
+7. I used the samples created at **point number 6** and implemented Canary deployments.
+- Canary deployment spec file
+```
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: ng-canary
+  name: ng-canary
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ng-canary
+  template:
+    metadata:
+      labels:
+        app: ng-canary
+    spec:
+      containers:
+      - image: nginx
+        name: ng-canary
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: ng-canary
+  name: ng-canary
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: ng-canary
+
+```
+- Primary deployment spec file
+```
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app: ng
+  name: ng
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: ng
+  strategy: {}
+  template:
+    metadata:
+      labels:
+        app: ng
+    spec:
+      containers:
+      - image: httpd
+        name: ng
+        ports:
+        - containerPort: 80
+---
+apiVersion: v1
+kind: Service
+metadata:
+  creationTimestamp: null
+  labels:
+    app: ng
+  name: ng
+spec:
+  ports:
+  - port: 80
+    protocol: TCP
+    targetPort: 80
+  selector:
+    app: ng
+```
+- Ingress configurations to share the traffic
+```
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: traffic-split
+  annotations:
+    alb.ingress.kubernetes.io/group.name: traffic-split
+    alb.ingress.kubernetes.io/load-balancer-name: traffic-split
+    alb.ingress.kubernetes.io/target-type: ip
+    alb.ingress.kubernetes.io/scheme: internet-facing
+    alb.ingress.kubernetes.io/actions.weighted-routing: |
+      {
+          "type": "forward",
+          "forwardConfig": {
+              "targetGroups": [
+                  {
+                      "serviceName": "ng",
+                      "servicePort": 80,
+                      "weight": 90
+                  },
+                  {
+                      "serviceName": "ng-canary",
+                      "servicePort": 80,
+                      "weight": 10
+                  }
+              ],
+              "targetGroupStickinessConfig": {
+                  "enabled": false
+              }
+          }
+      }
+spec:
+  ingressClassName: alb
+  rules:
+    - http:
+        paths:
+          - backend:
+              service:
+                name: weighted-routing
+                port: 
+                  name: use-annotation
+            pathType: ImplementationSpecific
+```
+
+Source for the above implementation : https://sumanthkumarc.medium.com/eks-alb-controller-simple-canary-deployment-for-applications-on-aws-eks-82f83ac7b092
