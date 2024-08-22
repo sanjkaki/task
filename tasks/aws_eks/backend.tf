@@ -1,7 +1,7 @@
 terraform {
   backend "s3" {
-    bucket = "sanjkaki-terraform"
-    key = "sanjkaki/task.tfstate"
+    bucket = "your_own_bucket"
+    key = "Some_key"
     region = "us-east-1"
     
   }
